@@ -40,6 +40,7 @@ import OptionInput from "@/components/OptionInput.vue";
 import RouteTable from "@/components/RouteTable.vue";
 import { mapState } from "vuex";
 import Anser from "anser";
+import { runArtisanSSH } from "@/lib/ssh.ts";
 
 export default {
   name: "Command",
@@ -119,22 +120,10 @@ export default {
       this.$store.state.running = true;
       let stdout = "";
       if (this.$store.state.project.isRemote) {
-        // Ejecutar por SSH
-        const sshRaw = this.$store.state.project.ssh;
-        // Filtrar solo propiedades serializables
-        const ssh = {
-          host: sshRaw.host,
-          port: sshRaw.port,
-          username: sshRaw.username,
-          password: sshRaw.password,
-          privateKey: sshRaw.privateKey,
-          projectPath: sshRaw.projectPath
-        };
-        const projectPath = ssh.projectPath;
-        const command = `cd ${projectPath} && php artisan ${this.artisanArray.join(' ')}`;
+        // Ejecutar por SSH usando utilitario
+        const ssh = this.$store.state.project.ssh;
         try {
-          const result = await window.kit.runSSHCommand(ssh, command);
-          stdout = result && result.stdout ? result.stdout : (result.stderr || "");
+          stdout = await runArtisanSSH(ssh, this.artisanArray);
         } catch (err) {
           stdout = err.message || String(err);
         }

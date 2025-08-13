@@ -40,6 +40,7 @@
 import { mapState, mapActions, mapMutations } from "vuex";
 import basename from "@/lib/basename.ts";
 import KitButton from "@/components/KitButton.vue";
+import { openRemoteProject } from "@/lib/ssh.ts";
 export default {
   name: "Home",
   components: { KitButton },
@@ -73,29 +74,14 @@ export default {
       const isRemote = localStorage.getItem('isRemote');
       if (creds && isRemote && JSON.parse(isRemote)) {
         const ssh = JSON.parse(creds);
-        const loadProject = async () => {
-          try {
-            const command = `cd ${ssh.projectPath} && php artisan --format=json`;
-            const result = await window.kit.runSSHCommand(ssh, command);
-            if (result && result.stdout) {
-              const parsed = JSON.parse(result.stdout);
-              const project = {
-                ...parsed,
-                ssh,
-                isRemote: true,
-                dir: '',
-                name: 'Proyecto remoto' 
-              };
-              this.setProject(project);
-              this.changeTab('Artisan');
-            } else {
-              alert('No se pudo obtener la información del proyecto remoto.');
-            }
-          } catch (err) {
+        openRemoteProject(ssh)
+          .then(project => {
+            this.setProject(project);
+            this.changeTab('Artisan');
+          })
+          .catch(err => {
             alert('Error al abrir el proyecto remoto por SSH: ' + (err.message || String(err)));
-          }
-        };
-        loadProject();
+          });
       }
     }
   },
