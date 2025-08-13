@@ -81,6 +81,7 @@
 </template>
 
 <script>
+import { mapMutations, mapState } from "vuex";
 export default {
     name: 'SSHCredentialsForm',
     data() {
@@ -96,35 +97,50 @@ export default {
             isRemote: false,
             saved: false,
             testResult: null,
+            errors: {},
         };
     },
+    computed: {
+        ...mapState(["sshCredentials", "isRemote"]),
+    },
     mounted() {
-        // Cargar credenciales guardadas al montar el componente
-        const savedCreds = localStorage.getItem('sshCredentials');
-        if (savedCreds) {
-            try {
-                this.form = JSON.parse(savedCreds);
-            } catch (e) {}
+        // Cargar credenciales guardadas del store
+        if (this.sshCredentials) {
+            this.form = { ...this.sshCredentials };
         }
-        const savedRemote = localStorage.getItem('isRemote');
-        if (savedRemote) {
-            try {
-                this.isRemote = JSON.parse(savedRemote);
-            } catch (e) {}
+        if (typeof this.isRemote === 'boolean') {
+            this.isRemote = this.isRemote;
         }
     },
     methods: {
+        ...mapMutations(["setSshCredentials", "setIsRemote"]),
         emitRemoteChange() {
+            this.setIsRemote(this.isRemote);
             this.$emit('remote-change', this.isRemote);
         },
+        validateForm() {
+            this.errors = {};
+            if (!this.form.host) this.errors.host = 'Host requerido';
+            if (!this.form.port) this.errors.port = 'Puerto requerido';
+            if (!this.form.username) this.errors.username = 'Usuario requerido';
+            if (!this.form.projectPath) this.errors.projectPath = 'Ruta del proyecto requerida';
+            return Object.keys(this.errors).length === 0;
+        },
         saveCredentials() {
-            localStorage.setItem('sshCredentials', JSON.stringify(this.form));
-            localStorage.setItem('isRemote', JSON.stringify(this.isRemote));
+            if (!this.validateForm()) {
+                return;
+            }
+            this.setSshCredentials({ ...this.form });
+            this.setIsRemote(this.isRemote);
             this.saved = true;
             setTimeout(() => (this.saved = false), 2000);
         },
         async testSSH() {
             this.testResult = null;
+            if (!this.validateForm()) {
+                this.testResult = { success: false, message: 'Completa todos los campos obligatorios.' };
+                return;
+            }
             try {
                 const command = `cd ${this.form.projectPath} && php artisan inspire`;
                 const result = await window.kit.runSSHCommand({
