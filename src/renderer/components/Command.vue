@@ -72,22 +72,23 @@ export default {
     },
     artisanArray() {
       let artisanArray = [];
-      artisanArray.push(this.name);
-      if (this.argumentsInit.length > 0) {
+      artisanArray.push(String(this.name));
+      if (Array.isArray(this.argumentsInit) && this.argumentsInit.length > 0) {
         this.argumentsInit.forEach((argument) => {
-          if (argument.value != "") {
-            artisanArray.push(argument.value);
+          if (typeof argument.value === 'string' && argument.value.trim() !== "") {
+            artisanArray.push(argument.value.trim());
           }
         });
       }
-      if (this.optionsInit.length > 0) {
+      if (Array.isArray(this.optionsInit) && this.optionsInit.length > 0) {
         this.optionsInit.forEach((option) => {
-          if (!(option.value == "" || option.value == false)) {
-            artisanArray.push(`${option.name}${option.accept_value ? "=" + option.value : ""}`);
+          if (!(option.value === "" || option.value === false)) {
+            artisanArray.push(String(option.name) + (option.accept_value ? "=" + String(option.value) : ""));
           }
-        }, "");
+        });
       }
-      return artisanArray;
+      // Solo strings planos
+      return artisanArray.map(x => String(x));
     },
     routes() {
       if (this.name == "route:list") {
@@ -114,16 +115,40 @@ export default {
         .map((option) => Object.assign({}, option, { value: option.accept_value ? "" : option.default }));
     },
     async getOutputAsync() {
-      if (this.$store.state.php !== "") {
-        this.output = "Running...";
-        this.$store.state.running = true;
-        const stdout = await window.kit.artisan(this.artisanArray, this.$store.state.dir);
-        this.output = Anser.ansiToHtml(Anser.escapeForHtml(stdout.trim()), { use_classes: true });
-        this.$refs["terminal-end"].scrollIntoView();
-        this.$store.state.running = false;
+      this.output = "Running...";
+      this.$store.state.running = true;
+      let stdout = "";
+      if (this.$store.state.project.isRemote) {
+        // Ejecutar por SSH
+        const sshRaw = this.$store.state.project.ssh;
+        // Filtrar solo propiedades serializables
+        const ssh = {
+          host: sshRaw.host,
+          port: sshRaw.port,
+          username: sshRaw.username,
+          password: sshRaw.password,
+          privateKey: sshRaw.privateKey,
+          projectPath: sshRaw.projectPath
+        };
+        const projectPath = ssh.projectPath;
+        const command = `cd ${projectPath} && php artisan ${this.artisanArray.join(' ')}`;
+        try {
+          const result = await window.kit.runSSHCommand(ssh, command);
+          stdout = result && result.stdout ? result.stdout : (result.stderr || "");
+        } catch (err) {
+          stdout = err.message || String(err);
+        }
+      } else if (this.$store.state.php !== "") {
+        // Local
+        stdout = await window.kit.artisan(this.artisanArray, this.$store.state.dir);
       } else {
         window.kit.dialogPhpNotFound();
+        this.$store.state.running = false;
+        return;
       }
+      this.output = Anser.ansiToHtml(Anser.escapeForHtml(stdout.trim()), { use_classes: true });
+      this.$refs["terminal-end"].scrollIntoView();
+      this.$store.state.running = false;
     }
   },
   mounted() {

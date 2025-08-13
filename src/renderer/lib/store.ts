@@ -60,6 +60,11 @@ export const store = createStore<State>({
     updateServeLink(state, link) {
       state.serveLink = link;
     },
+    setProject(state, project) {
+      state.project = project;
+      state.name = project.application?.version === 'Remoto' ? 'Proyecto remoto' : project.name || null;
+      state.dir = project.isRemote ? null : state.dir;
+    },
     clearRecents(state) {
       window.store.set("recents", []);
       state.recents = [];
