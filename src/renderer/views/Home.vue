@@ -70,11 +70,10 @@ export default {
       return basename(dir.toString());
     },
     startRemoteProject() {
-      const creds = localStorage.getItem('sshCredentials');
-      const isRemote = localStorage.getItem('isRemote');
-      if (creds && isRemote && JSON.parse(isRemote)) {
-        const ssh = JSON.parse(creds);
-        openRemoteProject(ssh)
+      const creds = this.$store.state.sshCredentials;
+      const isRemote = this.$store.state.isRemote;
+      if (creds && isRemote) {
+        openRemoteProject(creds)
           .then(project => {
             this.setProject(project);
             this.changeTab('Artisan');
@@ -88,9 +87,7 @@ export default {
   computed: {
     ...mapState(["project", "name", "dir", "recents"]),
     canStartRemote() {
-      const creds = localStorage.getItem('sshCredentials');
-      const isRemote = localStorage.getItem('isRemote');
-      return creds && isRemote && JSON.parse(isRemote);
+      return this.$store.state.sshCredentials && this.$store.state.isRemote;
     }
   }
 };
