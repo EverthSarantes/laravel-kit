@@ -54,8 +54,18 @@ export const store = createStore<State>({
     autoTinker: false,
     output: "// The output is shown here",
     php: "",
-    sshCredentials: null,
-    isRemote: false
+    sshCredentials: (() => {
+      try {
+        const creds = localStorage.getItem('sshCredentials');
+        return creds ? JSON.parse(creds) : null;
+      } catch { return null; }
+    })(),
+    isRemote: (() => {
+      try {
+        const isRemote = localStorage.getItem('isRemote');
+        return isRemote ? JSON.parse(isRemote) : false;
+      } catch { return false; }
+    })()
   },
   mutations: {
     changeTab(state, tab) {
