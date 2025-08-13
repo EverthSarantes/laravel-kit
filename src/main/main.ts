@@ -1,4 +1,5 @@
-import { app, BrowserWindow, BrowserWindowConstructorOptions, dialog, session } from "electron";
+import { app, BrowserWindow, BrowserWindowConstructorOptions, dialog, session, ipcMain } from "electron";
+import { runSSHCommand } from "./ssh";
 import windowStateKeeper from "electron-window-state";
 import { autoUpdater } from "electron-updater";
 import Store from "electron-store";
@@ -104,6 +105,15 @@ function createWindow() {
     autoUpdater.checkForUpdates();
   }
 })();
+
+ipcMain.handle("runSSHCommand", async (event, credentials, command) => {
+  try {
+    const result = await runSSHCommand(credentials, command);
+    return result;
+  } catch (error) {
+    return { stdout: "", stderr: (error instanceof Error ? error.message : String(error)) };
+  }
+});
 
 initIpcMain();
 
