@@ -52,7 +52,13 @@
         </span>
       </transition>
     </div>
-    <SSHCredentialsForm />
+    <div class="mt-6 mb-2">
+      <span class="font-semibold">Modo de proyecto: </span>
+      <span :class="isRemote ? 'text-blue-600' : 'text-gray-600'">
+        {{ isRemote ? 'Remoto (SSH)' : 'Local' }}
+      </span>
+    </div>
+    <SSHCredentialsForm @remote-change="onRemoteChange" />
   </div>
 </template>
 
@@ -71,7 +77,8 @@ export default {
       editor: "",
       saved: false,
       dark: false,
-      phpv: ""
+      phpv: "",
+      isRemote: false,
     };
   },
   methods: {
@@ -107,7 +114,21 @@ export default {
     this.dark = await window.store.get("dark");
     this.getPhpVersion();
     this.$store.dispatch("updateSettingsState");
-  }
+    // Cargar el modo remoto/local desde localStorage
+    const savedRemote = localStorage.getItem('isRemote');
+    if (savedRemote) {
+      try {
+        this.isRemote = JSON.parse(savedRemote);
+      } catch (e) {}
+    }
+  },
+  methods: {
+    // ...existing code...
+    onRemoteChange(val) {
+      this.isRemote = val;
+    },
+    // ...existing code...
+  },
 };
 </script>
 
