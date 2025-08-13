@@ -49,7 +49,7 @@
                     <label class="text-sm text-gray-900 dark:text-white">Tipo de conexión</label>
                 </div>
                 <label class="inline-flex items-center my-2">
-                    <input type="checkbox" v-model="isRemote" />
+                    <input type="checkbox" v-model="isRemote" @change="emitRemoteChange" />
                     <span class="ml-2">Usar conexión remota (SSH)</span>
                 </label>
             </div>
@@ -114,6 +114,9 @@ export default {
         }
     },
     methods: {
+        emitRemoteChange() {
+            this.$emit('remote-change', this.isRemote);
+        },
         saveCredentials() {
             localStorage.setItem('sshCredentials', JSON.stringify(this.form));
             localStorage.setItem('isRemote', JSON.stringify(this.isRemote));
