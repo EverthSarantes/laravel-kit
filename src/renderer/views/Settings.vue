@@ -52,15 +52,17 @@
         </span>
       </transition>
     </div>
+    <SSHCredentialsForm />
   </div>
 </template>
 
 <script>
 import KitButton from "@/components/KitButton.vue";
+import SSHCredentialsForm from "@/components/SSHCredentialsForm.vue";
 
 export default {
   name: "Settings",
-  components: { KitButton },
+  components: { KitButton, SSHCredentialsForm },
   data() {
     return {
       php: "",

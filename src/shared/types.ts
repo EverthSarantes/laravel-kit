@@ -45,6 +45,7 @@ declare global {
     openProject(dir: ConnectionFactoryOptions): Promise<ConnectionOpenProjectResponse>;
     startServe(dir: string): Promise<number>;
     killSync(serve: number): void;
+    runSSHCommand(credentials: any, command: string): Promise<{ stdout: string; stderr: string }>;
   }
 
   interface StoreInterface {

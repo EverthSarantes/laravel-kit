@@ -16,7 +16,8 @@ window.kit = {
   artisan,
   openProject,
   startServe,
-  killSync
+  killSync,
+  runSSHCommand,
 };
 
 window.store = {
@@ -119,4 +120,9 @@ async function startServe(dir: string) {
 
 function killSync(serve: number) {
   ipcRenderer.send("killSync", serve);
+}
+
+async function runSSHCommand(credentials: any, command: string) {
+  const result = await ipcRenderer.invoke("runSSHCommand", credentials, command);
+  return result;
 }
