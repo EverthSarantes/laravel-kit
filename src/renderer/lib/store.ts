@@ -30,6 +30,8 @@ interface State {
   autoTinker: boolean;
   output: string;
   php: string;
+  sshCredentials: any;
+  isRemote: boolean;
 }
 
 export const store = createStore<State>({
@@ -51,11 +53,21 @@ export const store = createStore<State>({
     code: `// Write your tinker code here\nuse Illuminate\\Foundation\\Inspiring;\nInspiring::quote();`,
     autoTinker: false,
     output: "// The output is shown here",
-    php: ""
+    php: "",
+    sshCredentials: null,
+    isRemote: false
   },
   mutations: {
     changeTab(state, tab) {
       state.tab = tab;
+    },
+    setSshCredentials(state, creds) {
+      state.sshCredentials = creds;
+      localStorage.setItem('sshCredentials', JSON.stringify(creds));
+    },
+    setIsRemote(state, isRemote) {
+      state.isRemote = isRemote;
+      localStorage.setItem('isRemote', JSON.stringify(isRemote));
     },
     updateServeLink(state, link) {
       state.serveLink = link;
