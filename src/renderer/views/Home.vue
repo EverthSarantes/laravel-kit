@@ -7,6 +7,9 @@
       <li class="mt-1">
         <span class="cursor-pointer text-blue dark:text-blue-100" @click="openDialog">Open project...</span>
       </li>
+      <li class="mt-1" v-if="canStartRemote">
+        <span class="cursor-pointer text-blue dark:text-blue-100" @click="startRemoteProject">Iniciar proyecto remoto (SSH)</span>
+      </li>
     </ul>
     <h3 class="mt-6 text-lg">Recent</h3>
     <ul class="text-sm" v-if="recents.length">
@@ -58,16 +61,51 @@ export default {
   },
   methods: {
     ...mapActions(["openDialog", "openProject"]),
-    ...mapMutations(["changeTab"]),
+    ...mapMutations(["changeTab", "setProject"]),
     openLink(link) {
       window.kit.openExternal(link.href);
     },
     basename(dir) {
       return basename(dir.toString());
+    },
+    startRemoteProject() {
+      const creds = localStorage.getItem('sshCredentials');
+      const isRemote = localStorage.getItem('isRemote');
+      if (creds && isRemote && JSON.parse(isRemote)) {
+        const ssh = JSON.parse(creds);
+        const loadProject = async () => {
+          try {
+            const command = `cd ${ssh.projectPath} && php artisan --format=json`;
+            const result = await window.kit.runSSHCommand(ssh, command);
+            if (result && result.stdout) {
+              const parsed = JSON.parse(result.stdout);
+              const project = {
+                ...parsed,
+                ssh,
+                isRemote: true,
+                dir: '',
+                name: 'Proyecto remoto' 
+              };
+              this.setProject(project);
+              this.changeTab('Artisan');
+            } else {
+              alert('No se pudo obtener la información del proyecto remoto.');
+            }
+          } catch (err) {
+            alert('Error al abrir el proyecto remoto por SSH: ' + (err.message || String(err)));
+          }
+        };
+        loadProject();
+      }
     }
   },
   computed: {
-    ...mapState(["project", "name", "dir", "recents"])
+    ...mapState(["project", "name", "dir", "recents"]),
+    canStartRemote() {
+      const creds = localStorage.getItem('sshCredentials');
+      const isRemote = localStorage.getItem('isRemote');
+      return creds && isRemote && JSON.parse(isRemote);
+    }
   }
 };
 </script>
